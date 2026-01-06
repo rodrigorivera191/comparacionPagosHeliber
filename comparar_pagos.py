@@ -19,7 +19,7 @@ import sys
 
 def parse_date(date_str):
     """
-    Parsea una fecha en formato DD/MM/YYYY o D/MM/YYYY o D/M/YYYY
+    Parsea una fecha en formato DD/MM/YYYY o D/MM/YYYY
     Retorna un objeto datetime o None si no se puede parsear
     """
     date_str = date_str.strip().strip('"')
@@ -63,23 +63,40 @@ def load_client_file(filepath):
     Columnas: Cuenta, Fecha, Numero, Descripcion, Monto, Tipo_de_Transferencia
     """
     payments = []
-    with open(filepath, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            fecha = parse_date(row['Fecha'])
-            monto = parse_amount(row['Monto'])
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
             
-            if fecha and monto:  # Solo agregar si tiene fecha y monto válidos
-                payments.append({
-                    'fecha': fecha,
-                    'mes_año': get_month_year(fecha),
-                    'monto': monto,
-                    'descripcion': row['Descripcion'].strip(),
-                    'tipo': row['Tipo_de_Transferencia'].strip(),
-                    'cuenta': row['Cuenta'].strip(),
-                    'numero': row['Numero'].strip(),
-                    'fecha_str': row['Fecha'].strip()
-                })
+            # Validar que existen las columnas requeridas
+            required_columns = ['Fecha', 'Monto', 'Descripcion', 'Tipo_de_Transferencia', 'Cuenta', 'Numero']
+            if reader.fieldnames is None:
+                raise ValueError(f"El archivo {filepath} está vacío o no tiene encabezados")
+            
+            missing_columns = [col for col in required_columns if col not in reader.fieldnames]
+            if missing_columns:
+                raise ValueError(f"Faltan columnas requeridas en {filepath}: {', '.join(missing_columns)}")
+            
+            for row in reader:
+                fecha = parse_date(row['Fecha'])
+                monto = parse_amount(row['Monto'])
+                
+                if fecha and monto:  # Solo agregar si tiene fecha y monto válidos
+                    payments.append({
+                        'fecha': fecha,
+                        'mes_año': get_month_year(fecha),
+                        'monto': monto,
+                        'descripcion': row['Descripcion'].strip(),
+                        'tipo': row['Tipo_de_Transferencia'].strip(),
+                        'cuenta': row['Cuenta'].strip(),
+                        'numero': row['Numero'].strip(),
+                        'fecha_str': row['Fecha'].strip()
+                    })
+    except FileNotFoundError:
+        print(f"Error: No se encontró el archivo {filepath}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error al leer {filepath}: {str(e)}")
+        sys.exit(1)
     
     return payments
 
@@ -90,20 +107,37 @@ def load_provider_file(filepath):
     Columnas: Fecha, Valor, Medio_de_Pago
     """
     payments = []
-    with open(filepath, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            fecha = parse_date(row['Fecha'])
-            valor = parse_amount(row['Valor'])
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
             
-            if fecha and valor:  # Solo agregar si tiene fecha y valor válidos
-                payments.append({
-                    'fecha': fecha,
-                    'mes_año': get_month_year(fecha),
-                    'monto': valor,
-                    'medio_pago': row['Medio_de_Pago'].strip().strip('"'),
-                    'fecha_str': row['Fecha'].strip().strip('"')
-                })
+            # Validar que existen las columnas requeridas
+            required_columns = ['Fecha', 'Valor', 'Medio_de_Pago']
+            if reader.fieldnames is None:
+                raise ValueError(f"El archivo {filepath} está vacío o no tiene encabezados")
+            
+            missing_columns = [col for col in required_columns if col not in reader.fieldnames]
+            if missing_columns:
+                raise ValueError(f"Faltan columnas requeridas en {filepath}: {', '.join(missing_columns)}")
+            
+            for row in reader:
+                fecha = parse_date(row['Fecha'])
+                valor = parse_amount(row['Valor'])
+                
+                if fecha and valor:  # Solo agregar si tiene fecha y valor válidos
+                    payments.append({
+                        'fecha': fecha,
+                        'mes_año': get_month_year(fecha),
+                        'monto': valor,
+                        'medio_pago': row['Medio_de_Pago'].strip().strip('"'),
+                        'fecha_str': row['Fecha'].strip().strip('"')
+                    })
+    except FileNotFoundError:
+        print(f"Error: No se encontró el archivo {filepath}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error al leer {filepath}: {str(e)}")
+        sys.exit(1)
     
     return payments
 
